@@ -1,6 +1,6 @@
 chrome.runtime.onMessage.addListener(async (data, sender) => {
     if (data?.command === "open-in-ipe") {
-        window.postMessage(data, "*",);
+        setTimeout(() => window.postMessage(data, "*",), 1000);
     }
     return false;
 });
