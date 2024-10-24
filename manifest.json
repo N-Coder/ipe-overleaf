@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "ipe-overleaf",
+  "version": "0.1",
+  "description": "Allows you to open files from Overleaf in ipe-web.",
+
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.overleaf.com/project/*"
+      ],
+      "js": [
+        "overleaf.js"
+      ]
+    },
+    {
+      "matches": [
+        "https://ipe-web.otfried.org/index.html"
+      ],
+      "js": [
+        "ipe-web.js"
+      ]
+    }
+  ],
+
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  }
+}
