@@ -7,10 +7,29 @@ function openInIpe(data) {
         const file = `${folder}/${data.file_name}`;
         FS.writeFile(file, new Uint8Array(data.blob));
         window.ipeui.openFile(file);
+
+        const button = document.createElement("button");
+        button.class = "mainmenu";
+        button.innerHTML = "Upload to Overleaf";
+        button.onclick = function () {
+            data.command = "upload-to-overleaf";
+            data.blob = FS.readFile(file);
+            window.postMessage(data, "*")
+        };
+        document.querySelector("div#mainmenu").appendChild(button);
     }, 1000);
 }
 
-chrome.runtime.onMessage.addListener((data, sender) => {
+function installListener() {
+    window.addEventListener("message", async (event) => {
+        if (event.source === window && event?.data?.command === "upload-to-overleaf") {
+            console.log("Got upload request", event.data);
+            await chrome.runtime.sendMessage(event.data);
+        }
+    });
+}
+
+chrome.runtime.onMessage.addListener(async (data, sender) => {
     console.log("Got data!", data, sender);
 
     if (data.command === "open-in-ipe") {
@@ -44,15 +63,24 @@ chrome.runtime.onMessage.addListener((data, sender) => {
                         (result) => console.log("Script injection result", result),
                         (error) => console.log("Script injection failed", error),
                     )
+                    chrome.scripting.executeScript({
+                        func: installListener,
+                        target: {tabId: tabId},
+                        world: chrome.scripting.ExecutionWorld.ISOLATED
+                    }).then(
+                        (result) => console.log("Script injection 2 result", result),
+                        (error) => console.log("Script injection 2 failed", error),
+                    )
                 }
             };
             chrome.tabs.onUpdated.addListener(listener, {tabId: tab.id, properties: ["status"]});
         });
 
     } else if (data.command === "upload-to-overleaf") {
+        console.log("Got upload request", data);
         chrome.tabs.sendMessage(data.return_tab_id, data);
     } else {
-        console.log("unknown command")
+        console.log("unknown command", data);
     }
     return false;
 });
