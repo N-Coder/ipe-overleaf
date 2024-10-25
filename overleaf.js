@@ -26,16 +26,18 @@ const observer = new MutationObserver(mutations => {
             if (selected_folder) {
                 [folder_id, folder_name] = extract_file_info(selected_folder);
             }
+            const csrf_token = document.querySelector("meta[name='ol-csrfToken']").getAttribute("content");
 
             const response = await fetch(`/project/${project_id}/file/${file_id}`);
             if (response.ok) {
                 await chrome.runtime.sendMessage({
                     command: "open-in-ipe",
-                    project_id: project_id,
-                    file_id: file_id,
-                    file_name: file_name,
-                    folder_id: folder_id,
-                    folder_name: folder_name,
+                    project_id,
+                    file_id,
+                    file_name,
+                    folder_id,
+                    folder_name,
+                    csrf_token,
                     blob: await (await response.blob()).bytes()
                 });
             } else {
@@ -57,7 +59,7 @@ chrome.runtime.onMessage.addListener(async (data, sender) => {
     const form = new FormData();
     form.append("relativePath", "null");
     form.append("name", data.file_name);
-    form.append("type", "application/pdf");
+    form.append("type", "application/octet-stream");
     form.append("qqfile", blob, data.file_name);
     fetch(`/project/${data.project_id}/upload?folder_id=${data.folder_id}`, {
         method: "POST",
@@ -66,7 +68,7 @@ chrome.runtime.onMessage.addListener(async (data, sender) => {
             "Accept": "application/json",
             "Cache-Control": "no-cache",
             "Referer": `https://www.overleaf.com/project/${data.project_id}`,
-            "x-csrf-token": "MlJhw5HV-ic0CN_13y5rWIJops4j2M7coB0Q",
+            "x-csrf-token": data.csrf_token,
         },
     }).then(
         (response) => {
