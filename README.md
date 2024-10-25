@@ -20,11 +20,9 @@ Das öffnet dann nen neuen ipe-web Tab, der über [`window.addEventListener`](ht
 
 # ToDo
 
-- folder_id/name is currently empty
-- menu also appears for .tex / other files (and sometimes is missing the ipe-web entry)
 - add further button in "file cannot be displayed" window
-- how should we store the files for ipe? maybe `~/.ipe/overleaf/${project_id}/${folder_id}/${file_name}`
-- what to do when "Open in ipe-web" is clicked a second time? Maybe compare timestamps in ipe files and ask whether we should overwrite?
+- what to do when "Open in ipe-web" is clicked a second time?
+  Maybe compare timestamps in ipe files and ask whether we should overwrite?
 - instead of opening a new tab for "ipe-web", check whether the file is already open
 - do not fail the upload if the overleaf tab was closed in the meantime
 - when uploading an ipe file, we should probably also upload the pdf version

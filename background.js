@@ -62,7 +62,7 @@ chrome.runtime.onMessage.addListener(async (data, sender) => {
         chrome.tabs.sendMessage(data.return_tab_id, data);
         chrome.tabs.update(data.return_tab_id, {active: true});
     } else {
-        console.log("unknown command")
+        console.log("unknown command", data);
     }
     return false;
 });
