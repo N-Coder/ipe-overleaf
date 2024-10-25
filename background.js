@@ -24,12 +24,13 @@ chrome.runtime.onMessage.addListener(async (data, sender) => {
         data.return_tab_id = sender.tab.id;
         if (!data.folder_id) {
             // the content script cannot access the page's global overleaf variable, but we can
+            // in this way, we can extract the root folder id
             data.folder_id = (await chrome.scripting.executeScript({
                 func: () => overleaf.unstable.store.get("project").rootFolder[0]._id,
                 target: {tabId: sender.tab.id},
                 world: chrome.scripting.ExecutionWorld.MAIN
             }))[0].result;
-            console.log("Resolved root folder id", data);
+            console.log("Resolved root folder id");
         }
 
         chrome.tabs.create({

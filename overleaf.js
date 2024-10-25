@@ -23,10 +23,9 @@ const observer = new MutationObserver(mutations => {
             const [file_id, file_name] = extract_file_info(selected_file);
             const selected_folder = selected_file.parentElement.previousElementSibling;
             let folder_id = null, folder_name = null;
-            if (selected_folder && selected_folder.tagName === "li" && selected_folder.role === "treeitem") {
+            if (selected_folder && selected_folder.role === "treeitem") {
                 [folder_id, folder_name] = extract_file_info(selected_folder);
-            } // otherwise the root folder ID will be extracted by background.js
-            const csrf_token = document.querySelector("meta[name='ol-csrfToken']").getAttribute("content");
+            } // not setting a folder ID in the request means it goes to the root folder
 
             const response = await fetch(`/project/${project_id}/file/${file_id}`);
             if (response.ok) {
@@ -37,7 +36,6 @@ const observer = new MutationObserver(mutations => {
                     file_name,
                     folder_id,
                     folder_name,
-                    csrf_token,
                     blob: await (await response.blob()).bytes()
                 });
             } else {
@@ -61,19 +59,37 @@ chrome.runtime.onMessage.addListener(async (data, sender) => {
     form.append("name", data.file_name);
     form.append("type", "application/octet-stream");
     form.append("qqfile", blob, data.file_name);
-    fetch(`/project/${data.project_id}/upload?folder_id=${data.folder_id}`, {
+    let url = `/project/${data.project_id}/upload`;
+    if (data.folder_id) {
+        form.append("targetFolderId", data.folder_id);
+        url = `${url}?folder_id=${data.folder_id}`;
+    }
+    const csrf_token = document.querySelector("meta[name='ol-csrfToken']").getAttribute("content");
+    fetch(url, {
         method: "POST",
         body: form,
         headers: {
             "Accept": "application/json",
             "Cache-Control": "no-cache",
             "Referer": `https://www.overleaf.com/project/${data.project_id}`,
-            "x-csrf-token": data.csrf_token,
+            "x-csrf-token": csrf_token,
         },
     }).then(
         (response) => {
             if (response.ok) {
-                alert("Uploaded!");
+                response.json().then(
+                    (rdata) => {
+                        if (rdata.success === true) {
+                            alert("Uploaded!");
+                        } else {
+                            alert(`Upload error from server: ${rdata}`);
+                        }
+                    },
+                    (error) => {
+                        alert(`Broken upload response: ${error}`);
+                    }
+                );
+
             } else {
                 alert(`Could not upload file: ${response.statusText} (${response.status})`);
             }
