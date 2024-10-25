@@ -7,12 +7,13 @@ function openInIpe(data) {
         const file = `${folder}/${data.file_name}`;
         FS.writeFile(file, new Uint8Array(data.blob));
         window.ipeui.openFile(file);
-        window.ipeui.addReturnToOverleaf(() => {
-            const updated = ipeui.ipe.FS.readFile(file);
-			data.command = "upload-to-overleaf";
-			data.blob = new Blob([updated.buffer]);
-            console.log("Now sending message");
-            window.postMessage(data);
+        window.ipeui.addSaveCallback((fn) => {
+            if (fn === file) {
+                const updated = ipeui.ipe.FS.readFile(file);
+                data.command = "upload-to-overleaf";
+                data.blob = new Blob([updated.buffer]);
+                window.postMessage(data);
+            }
         });
     }, 1000);
 }
