@@ -22,6 +22,16 @@ chrome.runtime.onMessage.addListener((data, sender) => {
 
     if (data.command === "open-in-ipe") {
         data.return_tab_id = sender.tab.id;
+        if (!data.folder_id) {
+            // the content script cannot access the page's global overleaf variable, but we can
+            data.folder_id = (await chrome.scripting.executeScript({
+                func: () => overleaf.unstable.store.get("project").rootFolder[0]._id,
+                target: {tabId: sender.tab.id},
+                world: chrome.scripting.ExecutionWorld.MAIN
+            }))[0].result;
+            console.log("Resolved root folder id", data);
+        }
+
         chrome.tabs.create({
             url: "https://ipe-web.otfried.org/index.html",
         }).then((tab) => {

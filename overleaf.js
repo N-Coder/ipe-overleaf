@@ -1,6 +1,6 @@
-function extract_file_info(selected_file) {
-    const file_id = selected_file.querySelector("div.entity").getAttribute("data-file-id");
-    const file_name = selected_file.querySelector("button.item-name-button > span").innerHTML;
+function extract_file_info(file) {
+    const file_id = file.querySelector("div.entity").getAttribute("data-file-id");
+    const file_name = file.querySelector("button.item-name-button > span").innerHTML;
     return [file_id, file_name];
 }
 
@@ -23,9 +23,9 @@ const observer = new MutationObserver(mutations => {
             const [file_id, file_name] = extract_file_info(selected_file);
             const selected_folder = selected_file.parentElement.previousElementSibling;
             let folder_id = null, folder_name = null;
-            if (selected_folder) {
+            if (selected_folder && selected_folder.tagName === "li" && selected_folder.role === "treeitem") {
                 [folder_id, folder_name] = extract_file_info(selected_folder);
-            }
+            } // otherwise the root folder ID will be extracted by background.js
             const csrf_token = document.querySelector("meta[name='ol-csrfToken']").getAttribute("content");
 
             const response = await fetch(`/project/${project_id}/file/${file_id}`);
