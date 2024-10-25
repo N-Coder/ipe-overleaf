@@ -22,7 +22,10 @@ const observer = new MutationObserver(mutations => {
             const selected_file = document.querySelector("div.file-tree li.selected");
             const {file_id, file_name} = extract_file_info(selected_file);
             const selected_folder = selected_file.parentElement.previousElementSibling;
-            const {folder_id, folder_name} = extract_file_info(selected_folder);
+            let folder_id, folder_name = null;
+            if (selected_folder) {
+                ({folder_id, folder_name} = extract_file_info(selected_folder));
+            }
 
             const response = await fetch(`/project/${project_id}/file/${file_id}`);
             if (response.ok) {
@@ -33,7 +36,7 @@ const observer = new MutationObserver(mutations => {
                     file_name: file_name,
                     folder_id: folder_id,
                     folder_name: folder_name,
-                    blob: await response.blob()
+                    blob: await (await response.blob()).bytes()
                 });
             } else {
                 alert(`Could not download file: ${response.statusText} (${response.status})`);

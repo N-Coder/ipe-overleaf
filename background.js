@@ -1,4 +1,16 @@
-browser.runtime.onMessage.addListener((data, sender) => {
+function openInIpe(data) {
+    console.log("Got data!", data);
+    window.setTimeout(() => {
+        const FS = window.ipeui.ipe.FS;
+        const folder = `/home/ipe/overleaf/${data.project_id}/${data.folder_id}`;
+        FS.mkdirTree(folder);
+        const file = `${folder}/${data.file_name}`;
+        FS.writeFile(file, new Uint8Array(data.blob));
+        window.ipeui.openFile(file);
+    }, 1000);
+}
+
+chrome.runtime.onMessage.addListener((data, sender) => {
     console.log("Got data!", data, sender);
 
     if (data.command === "open-in-ipe") {
@@ -10,15 +22,25 @@ browser.runtime.onMessage.addListener((data, sender) => {
             const listener = (tabId, changeInfo, tabInfo) => {
                 console.log("Tab updated!", tabId, changeInfo, tabInfo);
                 if (tabInfo.status === "complete") {
-                    browser.tabs.sendMessage(tabId, data);
                     chrome.tabs.onUpdated.removeListener(listener);
+
+                    data.blob = Array.from(data.blob);
+                    chrome.scripting.executeScript({
+                        args: [data],
+                        func: openInIpe,
+                        target: {tabId: tabId},
+                        world: chrome.scripting.ExecutionWorld.MAIN
+                    }).then(
+                        (result) => console.log("Script injection result", result),
+                        (error) => console.log("Script injection failed", error),
+                    )
                 }
             };
             chrome.tabs.onUpdated.addListener(listener, {tabId: tab.id, properties: ["status"]});
         });
 
     } else if (data.command === "upload-to-overleaf") {
-        browser.tabs.sendMessage(data.return_tab_id, data);
+        chrome.tabs.sendMessage(data.return_tab_id, data);
     } else {
         console.log("unknown command")
     }
