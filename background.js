@@ -17,7 +17,7 @@ function openInIpe(data) {
     }, 1000);
 }
 
-chrome.runtime.onMessage.addListener((data, sender) => {
+chrome.runtime.onMessage.addListener(async (data, sender) => {
     console.log("Got data!", data, sender);
 
     if (data.command === "open-in-ipe") {
@@ -59,6 +59,7 @@ chrome.runtime.onMessage.addListener((data, sender) => {
     } else if (data.command === "upload-to-overleaf") {
         console.log("Sending data back to Overleaf");
         chrome.tabs.sendMessage(data.return_tab_id, data);
+        chrome.tabs.update(data.return_tab_id, {active: true});
     } else {
         console.log("unknown command")
     }
