@@ -30,6 +30,8 @@ async function openIpe(click_event) {
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 const observer = new MutationObserver(mutations => {
     observer.disconnect();
     window.setTimeout(() =>
@@ -64,6 +66,45 @@ const observer = new MutationObserver(mutations => {
 
 // If you get "parameter 1 is not of type 'Node'" error, see https://stackoverflow.com/a/77855838/492336
 observer.observe(document.body, {childList: true});
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const observerNoPreview = new MutationObserver(mutations => {
+    observerNoPreview.disconnect();
+    const panel_ide = document.querySelector("#panel-ide");
+    if (!panel_ide) {
+        window.setTimeout(() =>
+                observerNoPreview.observe(document.body, {childList: true, subtree: true}),
+            100);
+        return;
+    }
+    observerNoPreview.observe(panel_ide, {childList: true, subtree: true});
+
+    const buttons = panel_ide.querySelector("div.file-view-buttons");
+    const ipe_web_btn = buttons?.querySelector("a#ipe-web-btn");
+    const selected_file = document.querySelector("div.file-tree li.selected");
+    let file_id = null, file_name = null;
+    if (selected_file) {
+        [file_id, file_name] = extract_file_info(selected_file);
+    }
+    if (buttons && (file_name.endsWith(".ipe") || file_name.endsWith(".pdf"))) {
+        if (!ipe_web_btn) {
+            buttons.insertAdjacentHTML("beforeend",
+                '<a id="ipe-web-btn" class="btn-secondary btn">' +
+                '<i class="fa fa-edit fa-fw" aria-hidden="true"></i>' +
+                '<span>Edit with ipe-web</span></a>')
+            buttons.querySelector("a#ipe-web-btn").addEventListener("click", openIpe);
+        }
+    } else {
+        if (ipe_web_btn) {
+            ipe_web_btn.remove();
+        }
+    }
+});
+
+observerNoPreview.observe(document.body, {childList: true, subtree: true});
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 chrome.runtime.onMessage.addListener(async (data, sender) => {
     if (data.command === "upload-to-overleaf") {
