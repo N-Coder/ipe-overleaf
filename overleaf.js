@@ -1,7 +1,7 @@
 function extract_file_info(selected_file) {
     const file_id = selected_file.querySelector("div.entity").getAttribute("data-file-id");
     const file_name = selected_file.querySelector("button.item-name-button > span").innerHTML;
-    return {file_id, file_name};
+    return [file_id, file_name];
 }
 
 const observer = new MutationObserver(mutations => {
@@ -20,11 +20,11 @@ const observer = new MutationObserver(mutations => {
         ipe_web_li.addEventListener("click", async (e) => {
             const project_id = document.querySelector("head > meta[name='ol-project_id']").getAttribute("content");
             const selected_file = document.querySelector("div.file-tree li.selected");
-            const {file_id, file_name} = extract_file_info(selected_file);
+            const [file_id, file_name] = extract_file_info(selected_file);
             const selected_folder = selected_file.parentElement.previousElementSibling;
-            let folder_id, folder_name = null;
+            let folder_id = null, folder_name = null;
             if (selected_folder) {
-                ({folder_id, folder_name} = extract_file_info(selected_folder));
+                [folder_id, folder_name] = extract_file_info(selected_folder);
             }
 
             const response = await fetch(`/project/${project_id}/file/${file_id}`);
@@ -52,9 +52,10 @@ const observer = new MutationObserver(mutations => {
 observer.observe(document.body, {childList: true});
 
 chrome.runtime.onMessage.addListener(async (data, sender) => {
+    const bytes = await data.blob.bytes();
     fetch(`/project/${data.project_id}/upload?folder_id=${data.folder_id}`, {
         method: "POST",
-        body: data.blob,
+        body: new Blob([bytes.buffer]),
         headers: {
             "Content-Type": "application/octet-stream",
             "Content-Disposition": `attachment; filename="${data.file_name}"`

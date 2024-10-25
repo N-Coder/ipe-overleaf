@@ -11,6 +11,14 @@
       "js": [
         "overleaf.js"
       ]
+    },
+    {
+      "matches": [
+       "https://ipe-web.otfried.org/index.html"
+      ],
+    "js": [
+      "ipe-web.js"
+     ]
     }
   ],
   "background": {
