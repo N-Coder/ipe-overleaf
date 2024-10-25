@@ -53,12 +53,20 @@ observer.observe(document.body, {childList: true});
 
 chrome.runtime.onMessage.addListener(async (data, sender) => {
     const bytes = await data.blob.bytes();
+    const blob = new Blob([bytes.buffer], {type: "application/octet-stream"});
+    const form = new FormData();
+    form.append("relativePath", "null");
+    form.append("name", data.file_name);
+    form.append("type", "application/pdf");
+    form.append("qqfile", blob, data.file_name);
     fetch(`/project/${data.project_id}/upload?folder_id=${data.folder_id}`, {
         method: "POST",
-        body: new Blob([bytes.buffer]),
+        body: form,
         headers: {
-            "Content-Type": "application/octet-stream",
-            "Content-Disposition": `attachment; filename="${data.file_name}"`
+            "Accept": "application/json",
+            "Cache-Control": "no-cache",
+            "Referer": `https://www.overleaf.com/project/${data.project_id}`,
+            "x-csrf-token": "MlJhw5HV-ic0CN_13y5rWIJops4j2M7coB0Q",
         },
     }).then(
         (response) => {
