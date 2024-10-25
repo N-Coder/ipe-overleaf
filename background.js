@@ -2,11 +2,18 @@ function openInIpe(data) {
     console.log("Got data!", data);
     window.setTimeout(() => {
         const FS = window.ipeui.ipe.FS;
-        const folder = `/home/ipe/overleaf/${data.project_id}/${data.folder_id}`;
+        const folder = `/home/overleaf/${data.project_id}/${data.folder_id}`;
         FS.mkdirTree(folder);
         const file = `${folder}/${data.file_name}`;
         FS.writeFile(file, new Uint8Array(data.blob));
         window.ipeui.openFile(file);
+        window.ipeui.addReturnToOverleaf(() => {
+            const updated = ipeui.ipe.FS.readFile(file);
+			data.command = "upload-to-overleaf";
+			data.blob = new Blob([updated.buffer]);
+            console.log("Now sending message");
+            window.postMessage(data);
+        });
     }, 1000);
 }
 
@@ -40,6 +47,7 @@ chrome.runtime.onMessage.addListener((data, sender) => {
         });
 
     } else if (data.command === "upload-to-overleaf") {
+        console.log("Sending data back to Overleaf");
         chrome.tabs.sendMessage(data.return_tab_id, data);
     } else {
         console.log("unknown command")
